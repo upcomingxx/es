@@ -4,11 +4,6 @@ import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
 
 import java.util.Map;
 
-/**
- * Created by zhangb on 2016/11/1.
- * 动态数据源的子类
- * 重写get数据源方法
- */
 public class TradingRoutingDataSource extends AbstractRoutingDataSource {
 	
 	@Override

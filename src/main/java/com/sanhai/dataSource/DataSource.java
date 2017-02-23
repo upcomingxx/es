@@ -1,7 +1,6 @@
 package com.sanhai.dataSource;
 
 /**
- * Created by zhangb on 2016/11/1.
  * 数据源常量定义
  *
  */

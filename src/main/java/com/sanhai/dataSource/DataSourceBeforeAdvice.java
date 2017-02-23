@@ -5,7 +5,6 @@ import org.springframework.aop.MethodBeforeAdvice;
 import java.lang.reflect.Method;
 
 /**
- * Created by zhangb on 2016/11/1.
  * 数据源aop前置通知
  * 执行完方法前用反射去类或方法上获取注解的值及数据源值
  */

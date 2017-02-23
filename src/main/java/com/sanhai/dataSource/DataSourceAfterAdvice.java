@@ -6,7 +6,6 @@ import org.springframework.aop.ThrowsAdvice;
 import java.lang.reflect.Method;
 
 /**
- * Created by zhangb on 2016/11/1.
  * 数据源aop后续通知
  * 执行完方法释放线程副本变量的值
  */
