@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+						http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+						http://www.springframework.org/schema/context
+						http://www.springframework.org/schema/context/spring-context-3.0.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+
+    <!-- 资源文件 -->
+    <context:property-placeholder location="classpath*:conf.properties"/>
+
+    <!-- 组件 -->
+    <context:component-scan base-package="com.sanhai.service"/>
+    <!-- 添加命令行接收处理 -->
+    <bean class="com.sanhai.common.command.CommandRecipient" init-method="start">
+        <property name="commandPort" value="${sys.commandPort}"/>
+        <property name="commandMap">
+            <map>
+                <entry key="STOP" value-ref="stopHandler"/>
+            </map>
+        </property>
+    </bean>
+    <bean id="stopHandler" class="com.sanhai.common.command.handler.StopCommandHandler"/>
+
+    <!-- DBCP数据源 -->
+   <!-- <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+        <property name="driverClassName" value="${jdbc.driver}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <property name="maxActive" value="${jdbc.maxActive}"/>
+        <property name="maxIdle" value="${jdbc.maxIdle}"/>
+        <property name="maxWait" value="${jdbc.maxIdle}"/>
+        <property name="minIdle" value="${jdbc.maxWait}"/>
+    </bean>-->
+
+    <!-- transaction 如果需要事务添加注解即可 -->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!-- SqlSessionFactory 注意：这里有2个项目的实体类 -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="typeAliasesPackage" value="com.sanhai.entity"/>
+        <property name="mapperLocations">
+            <list>
+                <value>classpath*:mapper/*.xml</value>
+            </list>
+        </property>
+    </bean>
+
+    <!-- DAO层 注意：这里有2个项目DAO类 -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+        <property name="basePackage"
+                  value="com.sanhai.repository"/>
+    </bean>
+
+    <!-- 多数据源配置 -->
+    <bean id="dataSource"
+          class="com.sanhai.dataSource.TradingRoutingDataSource">
+        <property name="targetDataSources">
+            <map key-type="java.lang.String">
+                <entry key="dataSourceA" value-ref="dataSourceA"/>
+                <entry key="dataSourceB" value-ref="dataSourceB"/>
+            </map>
+        </property>
+        <!-- common里只定义一个默认数据源-->
+        <property name="defaultTargetDataSource" ref="dataSourceA"></property>
+        <!--  <property name="writeUserDataSource" ref="writeUserDataSource"></property> -->
+    </bean>
+
+    <!-- 配置数据源 -->
+    <!--DBCP 数据源A 主库用于读写操作nep_service-->
+    <bean id="dataSourceA" class="org.apache.commons.dbcp.BasicDataSource">
+        <property name="driverClassName" value="${A.driver}"/>
+        <property name="url" value="${A.url}"/>
+        <property name="username" value="${A.username}"/>
+        <property name="password" value="${A.password}"/>
+        <property name="maxActive" value="${jdbc.maxActive}"/>
+        <property name="maxIdle" value="${jdbc.maxIdle}"/>
+        <property name="maxWait" value="${jdbc.maxWait}"/>
+        <property name="minIdle" value="${jdbc.minIdle}"/>
+    </bean>
+
+    <!-- 配置数据源 -->
+    <!--DBCP 数据源B 副库用于读操作nep_service-->
+    <bean id="dataSourceB" class="org.apache.commons.dbcp.BasicDataSource">
+        <property name="driverClassName" value="${B.driver}"/>
+        <property name="url" value="${B.url}"/>
+        <property name="username" value="${B.username}"/>
+        <property name="password" value="${B.password}"/>
+        <property name="maxActive" value="${jdbc.maxActive}"/>
+        <property name="maxIdle" value="${jdbc.maxIdle}"/>
+        <property name="maxWait" value="${jdbc.maxWait}"/>
+        <property name="minIdle" value="${jdbc.minIdle}"/>
+    </bean>
+
+    <bean id="dataSourceBeforeAdvice" class="com.sanhai.dataSource.DataSourceBeforeAdvice"></bean>
+    <bean id="datasourceAfterAdvice" class="com.sanhai.dataSource.DataSourceAfterAdvice"></bean>
+
+    <!-- 启用AOP注解 -->
+    <aop:aspectj-autoproxy proxy-target-class="true"/>
+
+    <!-- 数据源切换前置通知-->
+    <aop:config>
+        <aop:advisor advice-ref="dataSourceBeforeAdvice" order="100"
+                     pointcut="execution(* com.sanhai.service..*(..))"/>
+    </aop:config>
+
+    <!-- 数据源切换后置通知-->
+    <aop:config>
+        <aop:advisor advice-ref="datasourceAfterAdvice" order="400"
+                     pointcut="execution(* com.sanhai.service..*(..))"/>
+    </aop:config>
+
+
+</beans>

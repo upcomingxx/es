@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sanhai.repository.VideoDao">
+
+    <select id="selectVideo" resultType="java.util.Map">
+        SELECT videoId, theme, ptTitle from nep_service.sh_pt_video limit 1000
+    </select>
+
+</mapper>
